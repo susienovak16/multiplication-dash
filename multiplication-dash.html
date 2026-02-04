@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Dash! 🚀</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: #1a1a2e;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 20px;
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #00ff88; }
+            to { text-shadow: 0 0 40px #00ff88, 0 0 60px #00ff88; }
+        }
+
+        button {
+            font-size: 1.5em;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            border: none;
+            border-radius: 50px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #0f0f1e;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 1.2em;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #question {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,255,136,0.2);
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 3px solid #00ff88;
+            color: #00ff88;
+            font-size: 2.5em;
+            z-index: 5;
+            text-shadow: 0 0 10px #00ff88;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        #answers {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .answer-btn {
+            font-size: 2em;
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            border: 3px solid white;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255,107,107,0.5);
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            animation: correctFlash 0.5s;
+        }
+
+        .answer-btn.wrong {
+            background: linear-gradient(135deg, #333, #555);
+            animation: shake 0.5s;
+        }
+
+        @keyframes correctFlash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #combo {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            font-size: 1.5em;
+            color: #ffdd00;
+            text-shadow: 0 0 10px #ffdd00;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div>Score: <span id="score">0</span></div>
+            <div>Speed: <span id="speed">1x</span></div>
+        </div>
+
+        <div id="combo" class="hidden">
+            🔥 COMBO x<span id="comboCount">0</span>
+        </div>
+
+        <div id="question" class="hidden"></div>
+        <div id="answers" class="hidden"></div>
+
+        <div id="startScreen">
+            <h1>⚡ MULTIPLICATION DASH ⚡</h1>
+            <p style="font-size: 1.3em; margin-bottom: 30px;">Dodge obstacles by solving multiplication problems!</p>
+            <button onclick="startGame()">START GAME 🚀</button>
+            <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.7;">Inspired by Geometry Dash • Made for learning!</p>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h1>GAME OVER!</h1>
+            <p style="font-size: 2em; margin: 20px 0;">Final Score: <span id="finalScore">0</span></p>
+            <p style="font-size: 1.3em; margin-bottom: 30px;">Problems Solved: <span id="problemsSolved">0</span></p>
+            <button onclick="startGame()">PLAY AGAIN 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 500;
+
+        let gameRunning = false;
+        let score = 0;
+        let speed = 3;
+        let combo = 0;
+        let problemsSolved = 0;
+        let obstacles = [];
+        let particles = [];
+        let currentQuestion = null;
+        letAnswerButtons = [];
+
+        class Player {
+            constructor() {
+                this.x = 100;
+                this.y = canvas.height - 80;
+                this.width = 40;
+                this.height = 40;
+                this.velocity = 0;
+                this.jumping = false;
+                this.rotation = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
+                // Draw cool cube character
+                const gradient = ctx.createLinearGradient(-this.width/2, -this.height/2, this.width/2, this.height/2);
+                gradient.addColorStop(0, '#00ff88');
+                gradient.addColorStop(1, '#00d4ff');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                
+                // Eyes
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(-10, -5, 8, 8);
+                ctx.fillRect(2, -5, 8, 8);
+                
+                ctx.restore();
+            }
+
+            update() {
+                this.velocity += 0.8; // gravity
+                this.y += this.velocity;
+
+                if (this.y > canvas.height - 80) {
+                    this.y = canvas.height - 80;
+                    this.velocity = 0;
+                    this.jumping = false;
+                    this.rotation = 0;
+                } else {
+                    this.rotation += 0.15;
+                }
+            }
+
+            jump() {
+                if (!this.jumping) {
+                    this.velocity = -15;
+                    this.jumping = true;
+                }
+            }
+        }
+
+        class Obstacle {
+            constructor(hasQuestion = false) {
+                this.x = canvas.width;
+                this.y = canvas.height - 80;
+                this.width = 40;
+                this.height = 60;
+                this.hasQuestion = hasQuestion;
+                this.color = hasQuestion ? '#ffdd00' : '#ff6b6b';
+            }
+
+            draw() {
+                // Draw spike obstacle
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + this.width/2, this.y - this.height);
+                ctx.lineTo(this.x + this.width, this.y);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                this.x -= speed;
+            }
+
+            collidesWith(player) {
+                return player.x < this.x + this.width &&
+                       player.x + player.width > this.x &&
+                       player.y < this.y &&
+                       player.y + player.height > this.y - this.height;
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.size = Math.random() * 5 + 2;
+                this.color = color;
+                this.life = 1;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.globalAlpha = 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+            }
+        }
+
+        const player = new Player();
+
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 2; // 2-11
+            const num2 = Math.floor(Math.random() * 10) + 2; // 2-11
+            const correctAnswer = num1 * num2;
+            
+            const answers = [correctAnswer];
+            while (answers.length < 3) {
+                const wrong = correctAnswer + Math.floor(Math.random() * 20) - 10;
+                if (wrong > 0 && !answers.includes(wrong)) {
+                    answers.push(wrong);
+                }
+            }
+            
+            // Shuffle answers
+            answers.sort(() => Math.random() - 0.5);
+            
+            return {
+                text: `${num1} × ${num2}`,
+                correct: correctAnswer,
+                answers: answers
+            };
+        }
+
+        function showQuestion() {
+            currentQuestion = generateQuestion();
+            document.getElementById('question').textContent = currentQuestion.text + ' = ?';
+            document.getElementById('question').classList.remove('hidden');
+            
+            const answersDiv = document.getElementById('answers');
+            answersDiv.innerHTML = '';
+            answersDiv.classList.remove('hidden');
+            
+            currentQuestion.answers.forEach(answer => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = answer;
+                btn.onclick = () => checkAnswer(answer, btn);
+                answersDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(answer, btn) {
+            if (answer === currentQuestion.correct) {
+                btn.classList.add('correct');
+                combo++;
+                problemsSolved++;
+                score += 10 * combo;
+                
+                // Create success particles
+                for (let i = 0; i < 20; i++) {
+                    particles.push(new Particle(player.x + 20, player.y + 20, '#00ff88'));
+                }
+                
+                // Remove the question obstacle
+                obstacles = obstacles.filter(obs => !obs.hasQuestion);
+                
+                setTimeout(() => {
+                    document.getElementById('question').classList.add('hidden');
+                    document.getElementById('answers').classList.add('hidden');
+                    currentQuestion = null;
+                }, 300);
+                
+                if (combo > 1) {
+                    document.getElementById('combo').classList.remove('hidden');
+                    document.getElementById('comboCount').textContent = combo;
+                }
+                
+                // Speed up gradually
+                if (problemsSolved % 5 === 0 && speed < 8) {
+                    speed += 0.5;
+                }
+            } else {
+                btn.classList.add('wrong');
+                combo = 0;
+                document.getElementById('combo').classList.add('hidden');
+            }
+        }
+
+        function spawnObstacle() {
+            if (Math.random() < 0.3 && !currentQuestion) {
+                obstacles.push(new Obstacle(true));
+            } else {
+                obstacles.push(new Obstacle(false));
+            }
+        }
+
+        function drawBackground() {
+            // Animated grid background
+            ctx.strokeStyle = '#2a2a4a';
+            ctx.lineWidth = 1;
+            const offset = (Date.now() / 20) % 50;
+            
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i - offset, 0);
+                ctx.lineTo(i - offset, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Ground
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+            
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 60);
+            ctx.lineTo(canvas.width, canvas.height - 60);
+            ctx.stroke();
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+
+            // Update and draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Spawn obstacles
+            if (Math.random() < 0.02) {
+                spawnObstacle();
+            }
+
+            // Update obstacles
+            obstacles.forEach((obs, index) => {
+                obs.update();
+                obs.draw();
+
+                // Check collision
+                if (obs.collidesWith(player) && !currentQuestion) {
+                    if (obs.hasQuestion) {
+                        showQuestion();
+                    } else {
+                        gameOver();
+                    }
+                }
+
+                // Remove off-screen obstacles
+                if (obs.x + obs.width < 0) {
+                    obstacles.splice(index, 1);
+                    if (!obs.hasQuestion) {
+                        score += 5;
+                    }
+                }
+            });
+
+            player.update();
+            player.draw();
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('speed').textContent = speed.toFixed(1) + 'x';
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            speed = 3;
+            combo = 0;
+            problemsSolved = 0;
+            obstacles = [];
+            particles = [];
+            currentQuestion = null;
+            player.y = canvas.height - 80;
+            player.velocity = 0;
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('combo').classList.add('hidden');
+            document.getElementById('question').classList.add('hidden');
+            document.getElementById('answers').classList.add('hidden');
+            
+            gameLoop();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('problemsSolved').textContent = problemsSolved;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (gameRunning && (e.code === 'Space' || e.code === 'ArrowUp')) {
+                e.preventDefault();
+                player.jump();
+            }
+        });
+
+        canvas.addEventListener('click', () => {
+            if (gameRunning) {
+                player.jump();
+            }
+        });
+    </script>
+</body>
+</html>
